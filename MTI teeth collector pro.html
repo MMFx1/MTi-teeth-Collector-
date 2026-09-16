@@ -1,0 +1,4516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+
+<title>Tooth Collector Boy — Dental Challenge</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#101820;
+}
+
+body{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+#game-container{
+    position:relative;
+    width:800px;
+    height:600px;
+    max-width:100vw;
+    max-height:100vh;
+    overflow:hidden;
+    background:
+        linear-gradient(
+            180deg,
+            #102a43 0%,
+            #1f4965 55%,
+            #7895a8 100%
+        );
+    border:4px solid white;
+    border-radius:18px;
+    box-shadow:0 0 35px rgba(0,0,0,.6);
+}
+
+/* =========================
+   BACKGROUND
+========================= */
+
+#background{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+}
+
+.wall-light{
+    position:absolute;
+    width:100px;
+    height:22px;
+    top:65px;
+    background:rgba(230,250,255,.85);
+    border-radius:15px;
+    box-shadow:0 0 25px rgba(190,240,255,.8);
+}
+
+.wall-light:nth-child(1){left:100px}
+.wall-light:nth-child(2){right:100px}
+
+.window{
+    position:absolute;
+    width:150px;
+    height:105px;
+    top:105px;
+    left:325px;
+    border:7px solid #dce8ef;
+    background:linear-gradient(#82c9ee,#d7f4ff);
+    box-shadow:0 5px 15px rgba(0,0,0,.3);
+}
+
+.window:before,
+.window:after{
+    content:"";
+    position:absolute;
+    background:#dce8ef;
+}
+
+.window:before{
+    width:7px;
+    height:100%;
+    left:50%;
+}
+
+.window:after{
+    height:7px;
+    width:100%;
+    top:50%;
+}
+
+.floor{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:155px;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            #d6dde2 0,
+            #d6dde2 78px,
+            #c3cdd3 80px,
+            #c3cdd3 82px
+        );
+    border-top:4px solid #a9b7c0;
+}
+
+/* =========================
+   HUD
+========================= */
+
+#hud{
+    position:absolute;
+    top:10px;
+    left:12px;
+    right:12px;
+    display:flex;
+    justify-content:space-between;
+    z-index:100;
+    color:white;
+    font-size:15px;
+    font-weight:bold;
+    text-shadow:2px 2px 4px #000;
+    gap:5px;
+}
+
+.hud-box{
+    padding:7px 10px;
+    border-radius:11px;
+    background:rgba(0,0,0,.5);
+    backdrop-filter:blur(5px);
+    white-space:nowrap;
+}
+
+#combo{
+    color:#ffd83d;
+}
+
+#power{
+    color:#75e7ff;
+}
+
+#elixirs{
+    color:#69ffdf;
+}
+
+/* =========================
+   PLAYER
+========================= */
+
+#player{
+    position:absolute;
+    width:105px;
+    height:150px;
+    bottom:82px;
+    left:347px;
+    z-index:40;
+    transition:filter .15s;
+}
+
+#player.shielded{
+    filter:drop-shadow(0 0 13px #43e8ff);
+}
+
+#player.hit{
+    animation:damage .25s linear 2;
+}
+
+@keyframes damage{
+    50%{
+        filter:brightness(2);
+    }
+}
+
+/* ELECTROCUTION */
+
+#player.electrocuted{
+    animation:
+        electricShock .08s linear infinite,
+        electricFlash .15s linear infinite;
+
+    filter:
+        brightness(2)
+        saturate(2)
+        drop-shadow(0 0 18px #00eaff)
+        drop-shadow(0 0 35px #ffffff);
+}
+
+@keyframes electricShock{
+
+    0%{
+        transform:translate(0,0) rotate(0deg);
+    }
+
+    25%{
+        transform:translate(-5px,2px) rotate(-3deg);
+    }
+
+    50%{
+        transform:translate(5px,-2px) rotate(3deg);
+    }
+
+    75%{
+        transform:translate(-4px,-1px) rotate(-2deg);
+    }
+
+    100%{
+        transform:translate(4px,1px) rotate(2deg);
+    }
+}
+
+@keyframes electricFlash{
+
+    0%,100%{
+        filter:
+            brightness(1)
+            drop-shadow(0 0 5px #00eaff);
+    }
+
+    50%{
+        filter:
+            brightness(3)
+            drop-shadow(0 0 25px #00eaff)
+            drop-shadow(0 0 40px white);
+    }
+}
+
+.electric-bolt{
+    position:absolute;
+    z-index:500;
+    color:#8fffff;
+    font-size:35px;
+    font-weight:900;
+    pointer-events:none;
+
+    text-shadow:
+        0 0 5px white,
+        0 0 12px #00eaff,
+        0 0 25px #008cff;
+
+    animation:electricBolt .7s ease-out forwards;
+}
+
+@keyframes electricBolt{
+
+    0%{
+        opacity:1;
+        transform:scale(.5) rotate(-10deg);
+    }
+
+    40%{
+        opacity:1;
+        transform:scale(1.3) rotate(10deg);
+    }
+
+    100%{
+        opacity:0;
+        transform:
+            scale(.8)
+            rotate(-10deg)
+            translateY(-45px);
+    }
+}
+
+.elixir-reward{
+    color:#69ffdf;
+
+    text-shadow:
+        0 0 5px #00ffd5,
+        0 0 15px #00aaff;
+}
+
+/* =========================
+   HEAD
+========================= */
+
+.head{
+    position:absolute;
+    width:58px;
+    height:64px;
+    left:23px;
+    top:0;
+    background:
+        radial-gradient(
+            ellipse at 35% 25%,
+            #ffe2c3,
+            #f4bd91 48%,
+            #d99065
+        );
+    border-radius:48% 48% 45% 45%;
+    box-shadow:
+        inset -4px -5px 8px rgba(120,70,40,.18),
+        2px 4px 6px rgba(0,0,0,.25);
+}
+
+.hair{
+    position:absolute;
+    width:61px;
+    height:31px;
+    left:-2px;
+    top:-5px;
+    background:
+        radial-gradient(
+            circle at 50% 70%,
+            #39261c,
+            #17110e
+        );
+    border-radius:55% 55% 30% 25%;
+}
+
+.hair:before,
+.hair:after{
+    content:"";
+    position:absolute;
+    width:13px;
+    height:28px;
+    top:9px;
+    background:#20150f;
+    border-radius:50%;
+}
+
+.hair:before{left:-3px}
+.hair:after{right:-3px}
+
+.eye{
+    position:absolute;
+    width:7px;
+    height:9px;
+    top:29px;
+    background:#211812;
+    border-radius:50%;
+}
+
+.eye.left{left:16px}
+.eye.right{right:16px}
+
+.nose{
+    position:absolute;
+    width:8px;
+    height:10px;
+    left:25px;
+    top:35px;
+    border-right:2px solid rgba(130,75,50,.45);
+    border-bottom:2px solid rgba(130,75,50,.45);
+    border-radius:50%;
+}
+
+.smile{
+    position:absolute;
+    width:19px;
+    height:9px;
+    left:19px;
+    top:46px;
+    border-bottom:2px solid #7b3f35;
+    border-radius:0 0 50% 50%;
+}
+
+/* =========================
+   LAB COAT
+========================= */
+
+.lab-coat{
+    position:absolute;
+    width:83px;
+    height:72px;
+    left:11px;
+    top:59px;
+    background:
+        linear-gradient(
+            100deg,
+            #fff,
+            #f7f9fb 40%,
+            #dce5ec
+        );
+    border-radius:14px 14px 8px 8px;
+    border:1px solid rgba(180,190,200,.7);
+    box-shadow:2px 5px 8px rgba(0,0,0,.28);
+}
+
+.lab-coat:before{
+    content:"";
+    position:absolute;
+    width:2px;
+    height:65px;
+    left:41px;
+    top:5px;
+    background:#c8d1d9;
+}
+
+.shirt{
+    position:absolute;
+    width:25px;
+    height:27px;
+    left:29px;
+    top:4px;
+    background:#e8f3ff;
+    clip-path:
+        polygon(
+            50% 0,
+            100% 30%,
+            82% 100%,
+            18% 100%,
+            0 30%
+        );
+}
+
+.tie{
+    position:absolute;
+    width:9px;
+    height:34px;
+    left:37px;
+    top:8px;
+    background:
+        linear-gradient(
+            90deg,
+            #173e67,
+            #2877b9,
+            #173e67
+        );
+
+    clip-path:
+        polygon(
+            30% 0,
+            70% 0,
+            100% 75%,
+            50% 100%,
+            0 75%
+        );
+
+    z-index:2;
+}
+
+.mti-badge{
+    position:absolute;
+    width:32px;
+    height:21px;
+    left:48px;
+    top:18px;
+
+    background:
+        linear-gradient(
+            #fff,
+            #e4ebf0
+        );
+
+    border:1px solid #9eabb5;
+    border-radius:3px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#164c80;
+    font-size:9px;
+    font-weight:900;
+
+    box-shadow:
+        0 2px 3px rgba(0,0,0,.25);
+
+    z-index:10;
+}
+
+.mti-badge:before{
+    content:"MMF";
+}
+
+.badge-clip{
+    position:absolute;
+    width:4px;
+    height:7px;
+    top:-5px;
+    left:14px;
+    background:#888;
+    border-radius:2px;
+}
+
+.arm{
+    position:absolute;
+    width:20px;
+    height:58px;
+    top:65px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #f8fafc,
+            #dce5eb
+        );
+
+    border-radius:12px;
+    z-index:3;
+}
+
+.arm.left{
+    left:-2px;
+    transform:rotate(13deg);
+}
+
+.arm.right{
+    right:-2px;
+    transform:rotate(-13deg);
+}
+
+.hand{
+    position:absolute;
+    width:18px;
+    height:20px;
+    top:108px;
+
+    background:
+        radial-gradient(
+            circle at 40% 30%,
+            #ffe0be,
+            #d9956d
+        );
+
+    border-radius:45%;
+}
+
+.hand.left{left:0}
+.hand.right{right:0}
+
+/* =========================
+   JAR
+========================= */
+
+#jar{
+    position:absolute;
+    width:55px;
+    height:62px;
+    left:25px;
+    top:83px;
+    z-index:15;
+}
+
+.jar-lid{
+    position:absolute;
+    width:45px;
+    height:10px;
+    left:5px;
+    top:0;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(235,245,250,.42),
+            rgba(120,150,165,.28)
+        );
+
+    border:
+        1px solid rgba(220,240,250,.65);
+
+    border-radius:5px 5px 2px 2px;
+
+    box-shadow:
+        inset 0 1px 2px rgba(255,255,255,.45),
+        0 2px 3px rgba(0,0,0,.25);
+
+    backdrop-filter:blur(1px);
+    z-index:4;
+}
+
+.jar-body{
+    position:absolute;
+    width:50px;
+    height:51px;
+    left:2px;
+    top:8px;
+
+    border-radius:6px 6px 14px 14px;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,.22),
+            rgba(150,220,255,.22),
+            rgba(255,255,255,.36)
+        );
+
+    border:
+        2px solid rgba(220,245,255,.85);
+
+    box-shadow:
+        inset 5px 0 7px rgba(255,255,255,.35),
+        inset -6px 0 8px rgba(70,150,190,.15),
+        0 3px 7px rgba(0,0,0,.28);
+
+    overflow:hidden;
+}
+
+.jar-body:before{
+    content:"";
+    position:absolute;
+    width:7px;
+    height:38px;
+    left:6px;
+    top:5px;
+    border-radius:50%;
+    background:rgba(255,255,255,.6);
+    transform:rotate(8deg);
+    z-index:5;
+}
+
+.jar-label{
+    position:absolute;
+    width:43px;
+    height:14px;
+    left:3px;
+    top:26px;
+
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(70,110,140,.4);
+
+    color:#1b527c;
+    font-size:6px;
+    font-weight:bold;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    z-index:6;
+}
+
+.jar-tooth{
+    position:absolute;
+    width:10px;
+    height:14px;
+
+    background:#fffdf1;
+
+    clip-path:
+        polygon(
+            20% 0,
+            38% 5%,
+            50% 12%,
+            62% 5%,
+            80% 0,
+            94% 20%,
+            88% 65%,
+            65% 78%,
+            55% 100%,
+            45% 86%,
+            30% 78%,
+            12% 65%,
+            6% 20%
+        );
+
+    z-index:2;
+}
+
+/* =========================
+   LEGS
+========================= */
+
+.leg{
+    position:absolute;
+    width:21px;
+    height:32px;
+    top:122px;
+
+    background:
+        linear-gradient(
+            #374b60,
+            #1d2936
+        );
+
+    border-radius:5px;
+}
+
+.leg.left{left:25px}
+.leg.right{right:25px}
+
+.shoe{
+    position:absolute;
+    width:28px;
+    height:12px;
+    top:143px;
+
+    background:
+        linear-gradient(
+            #222,
+            #050505
+        );
+
+    border-radius:9px 9px 4px 4px;
+}
+
+.shoe.left{left:19px}
+.shoe.right{right:19px}
+
+/* =========================
+   ITEMS
+========================= */
+
+.tooth{
+    position:absolute;
+    width:38px;
+    height:52px;
+    z-index:20;
+
+    clip-path:
+        polygon(
+            20% 0,
+            38% 4%,
+            50% 10%,
+            62% 4%,
+            80% 0,
+            92% 13%,
+            96% 32%,
+            91% 53%,
+            82% 69%,
+            70% 78%,
+            64% 94%,
+            55% 100%,
+            50% 88%,
+            45% 100%,
+            36% 94%,
+            30% 78%,
+            18% 69%,
+            9% 53%,
+            4% 32%,
+            8% 13%
+        );
+
+    background:
+        radial-gradient(
+            ellipse at 32% 18%,
+            #fff,
+            #fffdf4 20%,
+            #f4efe2 48%,
+            #ddd4c2 75%,
+            #a79a84
+        );
+
+    filter:
+        drop-shadow(
+            2px 4px 3px rgba(0,0,0,.42)
+        );
+}
+
+.golden-tooth{
+    background:
+        radial-gradient(
+            ellipse at 32% 18%,
+            #fff8aa,
+            #ffe45b 20%,
+            #f1b923 52%,
+            #b36b00
+        );
+
+    filter:
+        drop-shadow(
+            0 0 8px rgba(255,215,40,.9)
+        );
+}
+
+.decayed-tooth{
+    background:
+        radial-gradient(
+            circle,
+            #4d2a18,
+            #21140e
+        );
+}
+
+.cavity-monster{
+    position:absolute;
+    width:48px;
+    height:48px;
+
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #ff6666,
+            #850000
+        );
+
+    border-radius:50%;
+    z-index:20;
+
+    box-shadow:
+        0 4px 9px rgba(0,0,0,.45);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:30px;
+}
+
+.candy{
+    position:absolute;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    z-index:20;
+
+    background:
+        radial-gradient(
+            circle,
+            #ffb0cf,
+            #ff2670
+        );
+
+    box-shadow:
+        0 0 12px rgba(255,80,140,.85);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:28px;
+}
+
+.instrument{
+    position:absolute;
+    width:43px;
+    height:43px;
+    z-index:20;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #f7fbff,
+            #9eabb5
+        );
+
+    border:2px solid white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:27px;
+
+    box-shadow:
+        0 4px 8px rgba(0,0,0,.4);
+}
+
+.shield{
+    position:absolute;
+    width:43px;
+    height:43px;
+    z-index:20;
+
+    border-radius:50%;
+
+    background:
+        radial-gradient(
+            circle,
+            #9fffff,
+            #1796d2
+        );
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:27px;
+
+    box-shadow:
+        0 0 15px #56eaff;
+}
+
+.magnet{
+    position:absolute;
+    width:43px;
+    height:43px;
+    z-index:20;
+
+    border-radius:50%;
+
+    background:#f5f5f5;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:27px;
+
+    box-shadow:
+        0 0 15px #ff5b5b;
+}
+
+/* =========================
+   SECURITY
+========================= */
+
+#security{
+    position:absolute;
+    width:75px;
+    height:110px;
+    bottom:77px;
+    left:-100px;
+    z-index:35;
+}
+
+.guard-head{
+    position:absolute;
+    width:45px;
+    height:45px;
+    left:15px;
+    top:0;
+
+    border-radius:50%;
+
+    background:
+        radial-gradient(
+            circle at 35% 25%,
+            #ffe0be,
+            #c9815c
+        );
+}
+
+.guard-body{
+    position:absolute;
+    width:65px;
+    height:67px;
+    left:5px;
+    top:42px;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            #263d52,
+            #102333
+        );
+}
+
+.guard-body:before{
+    content:"SECURITY";
+    position:absolute;
+    top:18px;
+    width:100%;
+    text-align:center;
+    color:white;
+    font-size:8px;
+    font-weight:bold;
+}
+
+.guard-hat{
+    position:absolute;
+    width:55px;
+    height:17px;
+    left:10px;
+    top:-3px;
+
+    background:#172b3b;
+
+    border-radius:
+        12px 12px 3px 3px;
+
+    z-index:3;
+}
+
+.guard-hat:after{
+    content:"";
+    position:absolute;
+    width:65px;
+    height:6px;
+    left:-5px;
+    bottom:-3px;
+
+    background:#10202e;
+    border-radius:5px;
+}
+
+/* =========================
+   OBSTACLES
+========================= */
+
+.obstacle{
+    position:absolute;
+    z-index:25;
+
+    border-radius:8px;
+
+    box-shadow:
+        0 5px 10px rgba(0,0,0,.35);
+}
+
+.dental-chair{
+    width:75px;
+    height:58px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #f2f5f7,
+            #8797a3
+        );
+
+    border:3px solid #dce5ea;
+}
+
+.dental-chair:before{
+    content:"";
+    position:absolute;
+    width:42px;
+    height:18px;
+    left:14px;
+    top:-12px;
+
+    border-radius:12px;
+
+    background:#cbd6dd;
+}
+
+.dental-chair:after{
+    content:"";
+    position:absolute;
+    width:7px;
+    height:25px;
+    left:34px;
+    bottom:-25px;
+
+    background:#687783;
+}
+
+.xray{
+    width:55px;
+    height:75px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #243746,
+            #607d8c
+        );
+
+    border:3px solid #d7e5ec;
+}
+
+.xray:before{
+    content:"X-RAY";
+    position:absolute;
+    color:white;
+    font-size:9px;
+    font-weight:bold;
+    left:7px;
+    top:10px;
+}
+
+/* =========================
+   BOSS
+========================= */
+
+#boss{
+    position:absolute;
+    width:120px;
+    height:120px;
+    left:340px;
+    top:-150px;
+    z-index:80;
+
+    display:none;
+
+    border-radius:50%;
+
+    background:
+        radial-gradient(
+            circle at 30% 25%,
+            #ff9a9a,
+            #b00000 55%,
+            #3b0000
+        );
+
+    box-shadow:
+        0 0 30px rgba(255,0,0,.8);
+
+    color:white;
+    font-size:70px;
+
+    align-items:center;
+    justify-content:center;
+}
+
+#boss-health{
+    position:absolute;
+    width:200px;
+    height:15px;
+    left:-40px;
+    bottom:-25px;
+
+    background:#300;
+
+    border:2px solid white;
+    border-radius:10px;
+
+    overflow:hidden;
+}
+
+#boss-health-bar{
+    width:100%;
+    height:100%;
+    background:#ff3030;
+}
+
+/* =========================
+   QUIZ
+========================= */
+
+#quiz{
+    position:absolute;
+    inset:0;
+
+    z-index:270;
+
+    display:none;
+
+    justify-content:center;
+    align-items:center;
+
+    background:
+        rgba(0,0,0,.78);
+
+    backdrop-filter:blur(4px);
+}
+
+.quiz-panel{
+    width:85%;
+    max-width:520px;
+
+    background:
+        linear-gradient(
+            #ffffff,
+            #edf7ff
+        );
+
+    padding:25px;
+
+    border-radius:20px;
+
+    text-align:center;
+
+    box-shadow:
+        0 10px 40px rgba(0,0,0,.65);
+
+    border:
+        3px solid #4fbfff;
+}
+
+.quiz-panel h2{
+    color:#1556a8;
+    margin-top:0;
+}
+
+.quiz-panel p{
+    color:#222;
+    font-size:18px;
+    font-weight:bold;
+    line-height:1.4;
+}
+
+.quiz-btn{
+    display:block;
+    width:100%;
+
+    padding:13px;
+
+    margin:9px 0;
+
+    border:none;
+    border-radius:12px;
+
+    background:#e8f3ff;
+
+    font-weight:bold;
+    font-size:15px;
+
+    cursor:pointer;
+
+    transition:
+        transform .1s,
+        background .2s;
+}
+
+.quiz-btn:hover{
+    background:#cce8ff;
+}
+
+.quiz-btn:active{
+    transform:scale(.97);
+}
+
+.quiz-btn:disabled{
+    opacity:.65;
+}
+
+/* =========================
+   TEXT
+========================= */
+
+.floating-text{
+    position:absolute;
+
+    color:white;
+
+    font-size:23px;
+    font-weight:bold;
+
+    text-shadow:
+        2px 2px 4px #000;
+
+    pointer-events:none;
+
+    animation:
+        floatText .8s ease-out forwards;
+
+    z-index:150;
+}
+
+@keyframes floatText{
+
+    from{
+        opacity:1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+    to{
+        opacity:0;
+        transform:
+            translateY(-48px)
+            scale(1.2);
+    }
+}
+
+/* =========================
+   OVERLAYS
+========================= */
+
+.overlay{
+    position:absolute;
+    inset:0;
+
+    background:
+        rgba(0,0,0,.68);
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+    z-index:300;
+}
+
+.panel{
+    width:88%;
+    max-width:540px;
+
+    background:
+        linear-gradient(
+            #fff,
+            #eef6ff
+        );
+
+    padding:27px;
+
+    border-radius:22px;
+
+    text-align:center;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.5);
+}
+
+.panel h1{
+    margin-top:0;
+    color:#1556a8;
+}
+
+.panel p{
+    color:#333;
+    line-height:1.5;
+}
+
+.start-button{
+    border:none;
+
+    padding:14px 30px;
+
+    border-radius:30px;
+
+    background:
+        linear-gradient(
+            #2997ff,
+            #1556a8
+        );
+
+    color:white;
+
+    font-size:19px;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 5px 12px rgba(0,0,0,.3);
+}
+
+/* =========================
+   MOBILE CONTROLS
+========================= */
+
+#mobile-controls{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:10px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    padding:0 18px;
+
+    z-index:250;
+
+    pointer-events:none;
+}
+
+.control-button{
+    width:68px;
+    height:68px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+    background:
+        rgba(0,0,0,.56);
+
+    border:
+        3px solid rgba(255,255,255,.85);
+
+    color:white;
+
+    font-size:30px;
+
+    pointer-events:auto;
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.45);
+}
+
+.control-button.active{
+    transform:scale(.88);
+
+    background:
+        rgba(35,120,220,.85);
+}
+
+@media(max-width:600px){
+
+    #game-container{
+        width:100vw;
+        height:100vh;
+
+        border:2px solid white;
+        border-radius:0;
+    }
+
+    #hud{
+        font-size:10px;
+        top:7px;
+        left:4px;
+        right:4px;
+        gap:2px;
+    }
+
+    .hud-box{
+        padding:6px 5px;
+    }
+
+    .panel{
+        width:92%;
+        padding:20px;
+    }
+
+    .panel h1{
+        font-size:25px;
+    }
+
+    .panel p{
+        font-size:13px;
+    }
+
+    .quiz-panel{
+        width:92%;
+        padding:18px;
+    }
+
+    .quiz-panel p{
+        font-size:15px;
+    }
+
+    .control-button{
+        width:63px;
+        height:63px;
+    }
+}
+
+@media(min-width:601px){
+
+    #mobile-controls{
+        display:none;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="game-container">
+
+<!-- BACKGROUND -->
+
+<div id="background">
+
+    <div class="wall-light"></div>
+    <div class="wall-light"></div>
+
+    <div class="window"></div>
+
+    <div class="floor"></div>
+
+</div>
+
+
+<!-- HUD -->
+
+<div id="hud">
+
+    <div class="hud-box">
+        🦷 <span id="score">0</span>/50
+    </div>
+
+    <div class="hud-box">
+        🏆 Lv.<span id="level">1</span>
+    </div>
+
+    <div class="hud-box">
+        🔥 <span id="combo">0</span>x
+    </div>
+
+    <div class="hud-box">
+        ❤️ <span id="lives">3</span>
+    </div>
+
+    <div class="hud-box">
+        🧪 <span id="elixirs">0</span>
+    </div>
+
+    <div class="hud-box">
+        ⚡ <span id="power">NONE</span>
+    </div>
+
+</div>
+
+
+<!-- PLAYER -->
+
+<div id="player">
+
+    <div class="head">
+
+        <div class="hair"></div>
+
+        <div class="eye left"></div>
+        <div class="eye right"></div>
+
+        <div class="nose"></div>
+
+        <div class="smile"></div>
+
+    </div>
+
+
+    <div class="lab-coat">
+
+        <div class="shirt"></div>
+
+        <div class="tie"></div>
+
+        <div class="mti-badge">
+
+            <div class="badge-clip"></div>
+
+        </div>
+
+    </div>
+
+
+    <div class="arm left"></div>
+    <div class="arm right"></div>
+
+    <div class="hand left"></div>
+    <div class="hand right"></div>
+
+
+    <!-- JAR -->
+
+    <div id="jar">
+
+        <div class="jar-lid"></div>
+
+        <div class="jar-body">
+
+            <div class="jar-label">
+                MTI DENTISTRY
+            </div>
+
+            <div id="jar-teeth"></div>
+
+        </div>
+
+    </div>
+
+
+    <div class="leg left"></div>
+    <div class="leg right"></div>
+
+    <div class="shoe left"></div>
+    <div class="shoe right"></div>
+
+</div>
+
+
+<!-- SECURITY -->
+
+<div id="security">
+
+    <div class="guard-hat"></div>
+
+    <div class="guard-head"></div>
+
+    <div class="guard-body"></div>
+
+</div>
+
+
+<!-- BOSS -->
+
+<div id="boss">
+
+    👾
+
+    <div id="boss-health">
+
+        <div id="boss-health-bar"></div>
+
+    </div>
+
+</div>
+
+
+<!-- START SCREEN -->
+
+<div id="start-screen" class="overlay">
+
+    <div class="panel">
+
+        <h1>
+            🦷 Tooth Collector Boy
+        </h1>
+
+        <p>
+
+            Collect
+            <strong>50 teeth</strong>
+            inside the dental faculty!
+
+            <br><br>
+
+            🦷 Tooth = +1<br>
+            🥇 Golden Tooth = +3<br>
+            🪥 Instrument = +2<br>
+            👾 Cavity Monster = -2 + lose ❤️<br>
+            🍬 Candy = Controls Reverse<br>
+            🛡️ Shield = Protects you<br>
+            🧲 Magnet = Pulls nearby teeth<br>
+            🚨 Security = Don't let him catch you!
+
+            <br><br>
+
+            🧠 <strong>
+            Every level contains a dental question.
+            </strong>
+
+            <br><br>
+
+            🧪 Correct =
+            <strong>Elixir of Life +1 ❤️</strong>
+
+            <br>
+
+            ⚡ Wrong =
+            <strong>Electrocution -1 ❤️</strong>
+
+            <br><br>
+
+            <strong>
+            Reach Level 5 to face the Cavity Boss!
+            </strong>
+
+        </p>
+
+        <button
+            class="start-button"
+            onclick="startGame()">
+
+            START CHALLENGE
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- GAME OVER -->
+
+<div
+    id="game-over"
+    class="overlay"
+    style="display:none">
+
+    <div class="panel">
+
+        <h1 id="game-result">
+            GAME OVER
+        </h1>
+
+        <p>
+
+            Final Score:
+
+            <strong>
+                <span id="final-score">0</span>/50
+            </strong>
+
+            <br>
+
+            Level:
+
+            <strong id="final-level">
+                1
+            </strong>
+
+            <br>
+
+            Elixirs:
+
+            <strong id="final-elixirs">
+                0
+            </strong>
+
+        </p>
+
+        <button
+            class="start-button"
+            onclick="startGame()">
+
+            PLAY AGAIN
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- QUIZ -->
+
+<div id="quiz">
+
+    <div class="quiz-panel">
+
+        <h2>
+            🧠 DENTAL CHECKPOINT
+        </h2>
+
+        <p>
+            ⏸️ GAME PAUSED
+        </p>
+
+        <p id="quiz-question"></p>
+
+        <button
+            class="quiz-btn"
+            onclick="answerQuiz(0)"
+            id="q0">
+        </button>
+
+        <button
+            class="quiz-btn"
+            onclick="answerQuiz(1)"
+            id="q1">
+        </button>
+
+        <button
+            class="quiz-btn"
+            onclick="answerQuiz(2)"
+            id="q2">
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- MOBILE CONTROLS -->
+
+<div id="mobile-controls">
+
+    <div
+        id="left-button"
+        class="control-button">
+
+        ◀
+
+    </div>
+
+    <div
+        id="right-button"
+        class="control-button">
+
+        ▶
+
+    </div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =========================
+   AUDIO
+========================= */
+
+let audioCtx=null;
+
+function initAudio(){
+
+    if(!audioCtx){
+
+        audioCtx=
+            new(
+                window.AudioContext||
+                window.webkitAudioContext
+            )();
+
+    }
+
+    if(audioCtx.state==="suspended")
+        audioCtx.resume();
+
+}
+
+
+function beep(
+    freq,
+    duration=.12,
+    type="sine"
+){
+
+    if(!audioCtx)return;
+
+    const osc=
+        audioCtx.createOscillator();
+
+    const gain=
+        audioCtx.createGain();
+
+    const now=
+        audioCtx.currentTime;
+
+    osc.type=type;
+
+    osc.frequency.value=
+        freq;
+
+    gain.gain.setValueAtTime(
+        .18,
+        now
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        .01,
+        now+duration
+    );
+
+    osc.connect(gain);
+
+    gain.connect(
+        audioCtx.destination
+    );
+
+    osc.start();
+
+    osc.stop(
+        now+duration
+    );
+
+}
+
+
+function playSound(type){
+
+    if(!audioCtx)return;
+
+
+    if(type==="tooth"){
+
+        beep(523,.08);
+
+        setTimeout(
+            ()=>beep(880,.08),
+            70
+        );
+
+    }
+
+
+    else if(type==="gold"){
+
+        beep(660,.08);
+
+        setTimeout(
+            ()=>beep(880,.08),
+            80
+        );
+
+        setTimeout(
+            ()=>beep(1175,.12),
+            160
+        );
+
+    }
+
+
+    else if(type==="bad"){
+
+        beep(
+            180,
+            .25,
+            "sawtooth"
+        );
+
+    }
+
+
+    else if(type==="power"){
+
+        beep(400,.08);
+
+        setTimeout(
+            ()=>beep(800,.15),
+            80
+        );
+
+    }
+
+
+    else if(type==="win"){
+
+        [523,659,784,1047]
+        .forEach(
+            (n,i)=>{
+
+                setTimeout(
+                    ()=>beep(
+                        n,
+                        .18,
+                        "triangle"
+                    ),
+                    i*100
+                );
+
+            }
+        );
+
+    }
+
+
+    else if(type==="electric"){
+
+        beep(
+            90,
+            .15,
+            "sawtooth"
+        );
+
+        setTimeout(
+            ()=>beep(
+                180,
+                .12,
+                "square"
+            ),
+            90
+        );
+
+        setTimeout(
+            ()=>beep(
+                70,
+                .20,
+                "sawtooth"
+            ),
+            170
+        );
+
+    }
+
+}
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const container=
+    document.getElementById(
+        "game-container"
+    );
+
+const player=
+    document.getElementById(
+        "player"
+    );
+
+const security=
+    document.getElementById(
+        "security"
+    );
+
+const boss=
+    document.getElementById(
+        "boss"
+    );
+
+const scoreDisplay=
+    document.getElementById(
+        "score"
+    );
+
+const livesDisplay=
+    document.getElementById(
+        "lives"
+    );
+
+const comboDisplay=
+    document.getElementById(
+        "combo"
+    );
+
+const levelDisplay=
+    document.getElementById(
+        "level"
+    );
+
+const powerDisplay=
+    document.getElementById(
+        "power"
+    );
+
+const elixirsDisplay=
+    document.getElementById(
+        "elixirs"
+    );
+
+const startScreen=
+    document.getElementById(
+        "start-screen"
+    );
+
+const gameOverScreen=
+    document.getElementById(
+        "game-over"
+    );
+
+const quiz=
+    document.getElementById(
+        "quiz"
+    );
+
+const finalScore=
+    document.getElementById(
+        "final-score"
+    );
+
+const finalLevel=
+    document.getElementById(
+        "final-level"
+    );
+
+const finalElixirs=
+    document.getElementById(
+        "final-elixirs"
+    );
+
+const gameResult=
+    document.getElementById(
+        "game-result"
+    );
+
+const jarTeeth=
+    document.getElementById(
+        "jar-teeth"
+    );
+
+const bossHealthBar=
+    document.getElementById(
+        "boss-health-bar"
+    );
+
+
+/* =========================
+   GAME VARIABLES
+========================= */
+
+let score=0;
+
+let lives=3;
+
+let level=1;
+
+let combo=0;
+
+let elixirs=0;
+
+const MAX_LIVES=5;
+
+let playerX=0;
+
+let items=[];
+
+let obstacles=[];
+
+let gameRunning=false;
+
+let animationFrame=null;
+
+let spawnInterval=null;
+
+let obstacleInterval=null;
+
+let moveLeft=false;
+
+let moveRight=false;
+
+let reverseControls=false;
+
+let shield=false;
+
+let magnet=false;
+
+let powerTimeout=null;
+
+let comboTimeout=null;
+
+let securityX=-100;
+
+let bossActive=false;
+
+let bossHP=10;
+
+let quizActive=false;
+
+let quizIndex=0;
+
+let speedMultiplier=1;
+
+
+/* =========================
+   START GAME
+========================= */
+
+function startGame(){
+
+    initAudio();
+
+    score=0;
+
+    lives=3;
+
+    level=1;
+
+    combo=0;
+
+    elixirs=0;
+
+    quizActive=false;
+
+    reverseControls=false;
+
+    shield=false;
+
+    magnet=false;
+
+    bossActive=false;
+
+    bossHP=10;
+
+    speedMultiplier=1;
+
+    playerX=
+        (container.clientWidth-105)/2;
+
+    player.style.left=
+        playerX+"px";
+
+    player.classList.remove(
+        "electrocuted"
+    );
+
+    securityX=-100;
+
+    security.style.left=
+        securityX+"px";
+
+    boss.style.display="none";
+
+    boss.style.top="-150px";
+
+    clearTimeout(powerTimeout);
+
+    clearTimeout(comboTimeout);
+
+    items.forEach(
+        i=>i.el?.remove()
+    );
+
+    obstacles.forEach(
+        o=>o.el?.remove()
+    );
+
+    items=[];
+
+    obstacles=[];
+
+    jarTeeth.innerHTML="";
+
+    updateHUD();
+
+    startScreen.style.display="none";
+
+    gameOverScreen.style.display="none";
+
+    quiz.style.display="none";
+
+    gameRunning=true;
+
+    moveLeft=false;
+
+    moveRight=false;
+
+    clearInterval(
+        spawnInterval
+    );
+
+    clearInterval(
+        obstacleInterval
+    );
+
+    spawnInterval=
+        setInterval(
+            spawnItem,
+            700
+        );
+
+    obstacleInterval=
+        setInterval(
+            spawnObstacle,
+            2200
+        );
+
+    animationFrame=
+        requestAnimationFrame(
+            gameLoop
+        );
+
+    /*
+     * FIRST QUESTION
+     */
+    setTimeout(
+        ()=>{
+            if(gameRunning)
+                showQuiz();
+        },
+        600
+    );
+
+}
+
+
+/* =========================
+   SPAWN ITEMS
+========================= */
+
+function spawnItem(){
+
+    if(
+        !gameRunning ||
+        bossActive ||
+        quizActive
+    )
+        return;
+
+    const el=
+        document.createElement(
+            "div"
+        );
+
+    let r=Math.random();
+
+    let type;
+
+
+    if(r<.50)
+        type="normal";
+
+    else if(r<.62)
+        type="gold";
+
+    else if(r<.74)
+        type="decay";
+
+    else if(r<.84)
+        type="cavity";
+
+    else if(r<.91)
+        type="candy";
+
+    else if(r<.96)
+        type="instrument";
+
+    else if(r<.985)
+        type="shield";
+
+    else
+        type="magnet";
+
+
+    if(
+        type==="normal"||
+        type==="decay"
+    ){
+
+        el.className="tooth";
+
+        if(type==="decay")
+            el.classList.add(
+                "decayed-tooth"
+            );
+
+    }
+
+
+    else if(type==="gold"){
+
+        el.className=
+            "tooth golden-tooth";
+
+    }
+
+
+    else if(type==="cavity"){
+
+        el.className=
+            "cavity-monster";
+
+        el.textContent="👾";
+
+    }
+
+
+    else if(type==="candy"){
+
+        el.className="candy";
+
+        el.textContent="🍬";
+
+    }
+
+
+    else if(type==="instrument"){
+
+        el.className="instrument";
+
+        el.textContent="🪥";
+
+    }
+
+
+    else if(type==="shield"){
+
+        el.className="shield";
+
+        el.textContent="🛡️";
+
+    }
+
+
+    else{
+
+        el.className="magnet";
+
+        el.textContent="🧲";
+
+    }
+
+
+    const width=
+        container.clientWidth;
+
+    const itemWidth=
+        type==="normal"||
+        type==="gold"||
+        type==="decay"
+        ?38
+        :45;
+
+
+    const x=
+        5+
+        Math.random()*
+        Math.max(
+            10,
+            width-itemWidth-10
+        );
+
+
+    el.style.left=
+        x+"px";
+
+    el.style.top="-70px";
+
+
+    if(
+        type==="normal"||
+        type==="gold"||
+        type==="decay"
+    ){
+
+        el.style.transform=
+            `rotate(${
+                (Math.random()-.5)*70
+            }deg)`;
+
+    }
+
+
+    container.appendChild(el);
+
+
+    items.push({
+
+        el,
+        x,
+        y:-70,
+
+        speed:
+            (
+                2.8+
+                Math.random()*2.5
+            )*
+            speedMultiplier,
+
+        type
+
+    });
+
+}
+
+
+/* =========================
+   SPAWN OBSTACLES
+========================= */
+
+function spawnObstacle(){
+
+    if(
+        !gameRunning ||
+        bossActive ||
+        quizActive
+    )
+        return;
+
+    const el=
+        document.createElement(
+            "div"
+        );
+
+    const type=
+        Math.random()<.65
+        ?"dental-chair"
+        :"xray";
+
+    el.className=
+        "obstacle "+type;
+
+
+    const width=
+        type==="dental-chair"
+        ?75
+        :55;
+
+
+    const x=
+        Math.random()*
+        (
+            container.clientWidth-
+            width
+        );
+
+
+    el.style.left=
+        x+"px";
+
+    el.style.top="-100px";
+
+
+    container.appendChild(el);
+
+
+    obstacles.push({
+
+        el,
+        x,
+        y:-100,
+
+        width,
+
+        height:
+            type==="dental-chair"
+            ?58
+            :75,
+
+        speed:
+            3.1*
+            speedMultiplier
+
+    });
+
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop(){
+
+    if(!gameRunning)
+        return;
+
+
+    /*
+     * COMPLETE FREEZE DURING QUIZ
+     */
+
+    if(quizActive){
+
+        animationFrame=
+            requestAnimationFrame(
+                gameLoop
+            );
+
+        return;
+
+    }
+
+
+    let moveSpeed=6;
+
+    let left=moveLeft;
+
+    let right=moveRight;
+
+
+    if(reverseControls){
+
+        [left,right]=
+            [right,left];
+
+    }
+
+
+    if(left)
+        playerX-=moveSpeed;
+
+    if(right)
+        playerX+=moveSpeed;
+
+
+    playerX=
+        Math.max(
+            0,
+            Math.min(
+                container.clientWidth-105,
+                playerX
+            )
+        );
+
+
+    player.style.left=
+        playerX+"px";
+
+
+    const playerTop=
+        container.clientHeight-
+        82-
+        150;
+
+
+    const playerBottom=
+        playerTop+150;
+
+    const playerLeft=
+        playerX;
+
+    const playerRight=
+        playerX+105;
+
+
+    /* ITEMS */
+
+    for(
+        let i=items.length-1;
+        i>=0;
+        i--
+    ){
+
+        const item=
+            items[i];
+
+
+        item.y+=
+            item.speed;
+
+
+        item.el.style.top=
+            item.y+"px";
+
+
+        if(
+            magnet &&
+            (
+                item.type==="normal"||
+                item.type==="gold"||
+                item.type==="instrument"
+            )
+        ){
+
+            const dx=
+                playerX+
+                52-
+                item.x;
+
+
+            if(Math.abs(dx)<170)
+                item.x+=dx*.035;
+
+
+            item.el.style.left=
+                item.x+"px";
+
+        }
+
+
+        const itemWidth=
+            item.type==="normal"||
+            item.type==="gold"||
+            item.type==="decay"
+            ?38
+            :45;
+
+
+        const itemHeight=
+            item.type==="normal"||
+            item.type==="gold"||
+            item.type==="decay"
+            ?52
+            :48;
+
+
+        const collision=
+            item.x+itemWidth>=playerLeft &&
+            item.x<=playerRight &&
+            item.y+itemHeight>=playerTop &&
+            item.y<=playerBottom;
+
+
+        if(collision){
+
+            collectItem(item);
+
+            continue;
+
+        }
+
+
+        if(
+            item.y>
+            container.clientHeight+80
+        ){
+
+            item.el.remove();
+
+            items.splice(i,1);
+
+        }
+
+    }
+
+
+    /* OBSTACLES */
+
+    for(
+        let i=obstacles.length-1;
+        i>=0;
+        i--
+    ){
+
+        const o=
+            obstacles[i];
+
+
+        o.y+=
+            o.speed;
+
+
+        o.el.style.top=
+            o.y+"px";
+
+
+        const collision=
+            o.x+o.width>=playerLeft+10 &&
+            o.x<=playerRight-10 &&
+            o.y+o.height>=playerTop+15 &&
+            o.y<=playerBottom;
+
+
+        if(collision){
+
+            hitObstacle(o);
+
+            continue;
+
+        }
+
+
+        if(
+            o.y>
+            container.clientHeight+100
+        ){
+
+            o.el.remove();
+
+            obstacles.splice(i,1);
+
+        }
+
+    }
+
+
+    updateSecurity();
+
+
+    if(bossActive)
+        updateBoss();
+
+
+    animationFrame=
+        requestAnimationFrame(
+            gameLoop
+        );
+
+}
+
+
+/* =========================
+   COLLECT ITEMS
+========================= */
+
+function collectItem(item){
+
+    item.el.remove();
+
+
+    const index=
+        items.indexOf(item);
+
+
+    if(index!==-1)
+        items.splice(index,1);
+
+
+    if(item.type==="normal"){
+
+        score++;
+
+        combo++;
+
+        addToJar();
+
+        playSound("tooth");
+
+        floating(
+            "+1 🦷",
+            item.x,
+            item.y
+        );
+
+        comboBonus();
+
+    }
+
+
+    else if(item.type==="gold"){
+
+        score+=3;
+
+        combo++;
+
+        addToJar();
+        addToJar();
+        addToJar();
+
+        playSound("gold");
+
+        floating(
+            "+3 🥇",
+            item.x,
+            item.y
+        );
+
+        comboBonus();
+
+    }
+
+
+    else if(item.type==="decay"){
+
+        score=
+            Math.max(
+                0,
+                score-1
+            );
+
+        combo=0;
+
+        playSound("bad");
+
+        floating(
+            "-1 🦷 DECAY!",
+            item.x,
+            item.y
+        );
+
+    }
+
+
+    else if(item.type==="cavity"){
+
+        score=
+            Math.max(
+                0,
+                score-2
+            );
+
+        combo=0;
+
+
+        if(!shield)
+            lives--;
+
+
+        player.classList.add("hit");
+
+
+        setTimeout(
+            ()=>{
+                player.classList.remove(
+                    "hit"
+                );
+            },
+            500
+        );
+
+
+        playSound("bad");
+
+
+        floating(
+            shield
+            ?"🛡️ BLOCKED!"
+            :"-2 🦷 ❤️ -1",
+            item.x,
+            item.y
+        );
+
+    }
+
+
+    else if(item.type==="candy"){
+
+        reverseControls=true;
+
+        clearTimeout(
+            powerTimeout
+        );
+
+        powerDisplay.textContent=
+            "REVERSE";
+
+
+        playSound("bad");
+
+
+        floating(
+            "🍬 CONTROLS REVERSED!",
+            item.x,
+            item.y
+        );
+
+
+        powerTimeout=
+            setTimeout(
+                ()=>{
+
+                    reverseControls=false;
+
+                    powerDisplay.textContent=
+                        "NONE";
+
+                },
+                4500
+            );
+
+    }
+
+
+    else if(item.type==="instrument"){
+
+        score+=2;
+
+        combo++;
+
+
+        playSound("power");
+
+
+        floating(
+            "+2 🪥 BONUS!",
+            item.x,
+            item.y
+        );
+
+
+        comboBonus();
+
+    }
+
+
+    else if(item.type==="shield"){
+
+        shield=true;
+
+        player.classList.add(
+            "shielded"
+        );
+
+        powerDisplay.textContent=
+            "SHIELD";
+
+
+        playSound("power");
+
+
+        floating(
+            "🛡️ SHIELD!",
+            item.x,
+            item.y
+        );
+
+
+        clearTimeout(
+            powerTimeout
+        );
+
+
+        powerTimeout=
+            setTimeout(
+                ()=>{
+
+                    shield=false;
+
+                    player.classList.remove(
+                        "shielded"
+                    );
+
+                    powerDisplay.textContent=
+                        "NONE";
+
+                },
+                7000
+            );
+
+    }
+
+
+    else if(item.type==="magnet"){
+
+        magnet=true;
+
+        powerDisplay.textContent=
+            "MAGNET";
+
+
+        playSound("power");
+
+
+        floating(
+            "🧲 MAGNET!",
+            item.x,
+            item.y
+        );
+
+
+        clearTimeout(
+            powerTimeout
+        );
+
+
+        powerTimeout=
+            setTimeout(
+                ()=>{
+
+                    magnet=false;
+
+                    powerDisplay.textContent=
+                        "NONE";
+
+                },
+                7000
+            );
+
+    }
+
+
+    updateHUD();
+
+    checkLevel();
+
+    checkGameEnd();
+
+}
+
+
+/* =========================
+   COMBO
+========================= */
+
+function comboBonus(){
+
+    clearTimeout(
+        comboTimeout
+    );
+
+
+    comboTimeout=
+        setTimeout(
+            ()=>{
+
+                combo=0;
+
+                updateHUD();
+
+            },
+            2500
+        );
+
+
+    if(combo===5){
+
+        score+=2;
+
+        floating(
+            "🔥 5 COMBO +2!",
+            playerX,
+            300
+        );
+
+    }
+
+
+    if(combo===10){
+
+        score+=5;
+
+        floating(
+            "🔥🔥 10 COMBO +5!",
+            playerX,
+            300
+        );
+
+    }
+
+
+    updateHUD();
+
+}
+
+
+/* =========================
+   OBSTACLE HIT
+========================= */
+
+function hitObstacle(o){
+
+    o.el.remove();
+
+
+    const index=
+        obstacles.indexOf(o);
+
+
+    if(index!==-1)
+        obstacles.splice(index,1);
+
+
+    if(shield){
+
+        floating(
+            "🛡️ BLOCKED!",
+            o.x,
+            o.y
+        );
+
+        return;
+
+    }
+
+
+    lives--;
+
+    combo=0;
+
+
+    player.classList.add(
+        "hit"
+    );
+
+
+    setTimeout(
+        ()=>{
+            player.classList.remove(
+                "hit"
+            );
+        },
+        500
+    );
+
+
+    playSound("bad");
+
+
+    floating(
+        "💥 OBSTACLE! ❤️ -1",
+        o.x,
+        o.y
+    );
+
+
+    updateHUD();
+
+    checkGameEnd();
+
+}
+
+
+/* =========================
+   SECURITY
+========================= */
+
+function updateSecurity(){
+
+    if(
+        level<2 ||
+        bossActive ||
+        quizActive
+    )
+        return;
+
+
+    const target=
+        playerX;
+
+
+    const difficulty=
+        .35+
+        level*.055;
+
+
+    if(securityX<target)
+        securityX+=difficulty;
+    else
+        securityX-=difficulty;
+
+
+    security.style.left=
+        securityX+"px";
+
+
+    const distance=
+        Math.abs(
+            securityX-playerX
+        );
+
+
+    if(distance<58){
+
+        if(shield){
+
+            securityX=-120;
+
+
+            floating(
+                "🛡️ SECURITY BLOCKED!",
+                playerX,
+                330
+            );
+
+        }
+
+        else{
+
+            lives--;
+
+            securityX=-120;
+
+            combo=0;
+
+
+            playSound("bad");
+
+
+            floating(
+                "🚨 CAUGHT! ❤️ -1",
+                playerX,
+                300
+            );
+
+
+            updateHUD();
+
+            checkGameEnd();
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   LEVELS
+========================= */
+
+function checkLevel(){
+
+    let newLevel=
+        Math.min(
+            5,
+            Math.floor(score/10)+1
+        );
+
+
+    if(newLevel>level){
+
+        level=newLevel;
+
+
+        speedMultiplier=
+            1+
+            (level-1)*.16;
+
+
+        floating(
+            "🚀 LEVEL "+level+"!",
+            playerX,
+            250
+        );
+
+
+        playSound("power");
+
+
+        if(level===2){
+
+            floating(
+                "🚨 SECURITY ARRIVES!",
+                playerX,
+                290
+            );
+
+        }
+
+
+        if(level===3){
+
+            floating(
+                "⚠️ MORE OBSTACLES!",
+                playerX,
+                290
+            );
+
+        }
+
+
+        if(level===4){
+
+            floating(
+                "🧠 DENTAL CHECKPOINT!",
+                playerX,
+                290
+            );
+
+        }
+
+
+        /*
+         * EVERY LEVEL GETS A QUESTION
+         */
+
+        setTimeout(
+            ()=>{
+
+                if(
+                    gameRunning &&
+                    !quizActive
+                )
+                    showQuiz();
+
+            },
+            700
+        );
+
+
+        /*
+         * LEVEL 5 BOSS
+         * waits until the question is answered
+         */
+
+        if(level===5){
+
+            const waitForQuiz=
+                setInterval(
+                    ()=>{
+
+                        if(
+                            !quizActive
+                        ){
+
+                            clearInterval(
+                                waitForQuiz
+                            );
+
+                            if(gameRunning)
+                                startBoss();
+
+                        }
+
+                    },
+                    100
+                );
+
+        }
+
+
+        updateHUD();
+
+    }
+
+}
+
+
+/* =========================
+   DENTAL QUESTIONS
+========================= */
+
+const quizzes=[
+
+    {
+        q:
+        "Which tooth is usually called the wisdom tooth?",
+
+        a:[
+            "Third molar",
+            "First premolar",
+            "Central incisor"
+        ],
+
+        correct:0
+    },
+
+
+    {
+        q:
+        "Which tissue is the hardest substance in the human body?",
+
+        a:[
+            "Enamel",
+            "Dentin",
+            "Cementum"
+        ],
+
+        correct:0
+    },
+
+
+    {
+        q:
+        "What does fluoride mainly help strengthen?",
+
+        a:[
+            "Enamel",
+            "Pulp",
+            "Periodontal ligament"
+        ],
+
+        correct:0
+    },
+
+
+    {
+        q:
+        "Which instrument is commonly used to remove calculus?",
+
+        a:[
+            "Scaler",
+            "Mouth mirror",
+            "Rubber dam"
+        ],
+
+        correct:0
+    },
+
+
+    {
+        q:
+        "What is the normal number of permanent teeth in most adults?",
+
+        a:[
+            "32",
+            "28",
+            "36"
+        ],
+
+        correct:0
+    },
+
+
+    {
+        q:
+        "Which tooth is located between the central incisor and canine?",
+
+        a:[
+            "Lateral incisor",
+            "First molar",
+            "Second premolar"
+        ],
+
+        correct:0
+    },
+
+
+    {
+        q:
+        "Which material is commonly used for dental impressions?",
+
+        a:[
+            "Alginate",
+            "Amalgam",
+            "Composite resin"
+        ],
+
+        correct:0
+    },
+
+
+    {
+        q:
+        "Which part of the tooth contains the nerves and blood vessels?",
+
+        a:[
+            "Pulp",
+            "Enamel",
+            "Cementum"
+        ],
+
+        correct:0
+    },
+
+
+    {
+        q:
+        "Which teeth are primarily designed for cutting food?",
+
+        a:[
+            "Incisors",
+            "Molars",
+            "Premolars"
+        ],
+
+        correct:0
+    },
+
+
+    {
+        q:
+        "What is the main purpose of a dental dam?",
+
+        a:[
+            "Isolation",
+            "To polish enamel",
+            "To take an X-ray"
+        ],
+
+        correct:0
+    }
+
+];
+
+
+/* =========================
+   SHOW QUIZ
+========================= */
+
+function showQuiz(){
+
+    if(
+        !gameRunning ||
+        quizActive ||
+        bossActive
+    )
+        return;
+
+
+    quizActive=true;
+
+
+    /*
+     * STOP PLAYER
+     */
+
+    moveLeft=false;
+
+    moveRight=false;
+
+
+    quizIndex=
+        Math.floor(
+            Math.random()*
+            quizzes.length
+        );
+
+
+    const q=
+        quizzes[quizIndex];
+
+
+    document.getElementById(
+        "quiz-question"
+    ).textContent=
+        q.q;
+
+
+    q.a.forEach(
+        (answer,i)=>{
+
+            const button=
+                document.getElementById(
+                    "q"+i
+                );
+
+            button.textContent=
+                answer;
+
+            button.disabled=false;
+
+        }
+    );
+
+
+    quiz.style.display=
+        "flex";
+
+
+    quiz.style.pointerEvents=
+        "auto";
+
+
+    beep(
+        520,
+        .12,
+        "triangle"
+    );
+
+}
+
+
+/* =========================
+   ANSWER QUIZ
+========================= */
+
+function answerQuiz(index){
+
+    if(!quizActive)
+        return;
+
+
+    const q=
+        quizzes[quizIndex];
+
+
+    quizActive=false;
+
+
+    document.querySelectorAll(
+        ".quiz-btn"
+    ).forEach(
+        button=>{
+            button.disabled=true;
+        }
+    );
+
+
+    if(index===q.correct){
+
+        /*
+         * CORRECT
+         *
+         * ELIXIR OF LIFE
+         */
+
+        elixirs++;
+
+
+        lives=
+            Math.min(
+                MAX_LIVES,
+                lives+1
+            );
+
+
+        quiz.style.display=
+            "none";
+
+
+        floating(
+            "🧪 ELIXIR OF LIFE! +1 ❤️",
+            playerX,
+            250
+        );
+
+
+        createElixirEffect();
+
+
+        playSound("gold");
+
+    }
+
+
+    else{
+
+        /*
+         * WRONG
+         *
+         * ELECTROCUTION
+         */
+
+        lives--;
+
+
+        quiz.style.display=
+            "none";
+
+
+        electrocutePlayer();
+
+
+        floating(
+            "⚡ WRONG! ELECTROCUTED! ❤️ -1",
+            playerX,
+            250
+        );
+
+
+        playSound("electric");
+
+    }
+
+
+    updateHUD();
+
+
+    /*
+     * Small result delay
+     */
+
+    setTimeout(
+        ()=>{
+
+            if(gameRunning){
+
+                checkLevel();
+
+                checkGameEnd();
+
+            }
+
+        },
+        750
+    );
+
+}
+
+
+/* =========================
+   ELECTROCUTION EFFECT
+========================= */
+
+function electrocutePlayer(){
+
+    player.classList.add(
+        "electrocuted"
+    );
+
+
+    const bolts=[
+
+        ["⚡",20,20],
+        ["⚡",-10,65],
+        ["⚡",75,15],
+        ["⚡",45,80],
+        ["⚡",0,105]
+
+    ];
+
+
+    bolts.forEach(
+        bolt=>{
+
+            const el=
+                document.createElement(
+                    "div"
+                );
+
+
+            el.className=
+                "electric-bolt";
+
+
+            el.textContent=
+                bolt[0];
+
+
+            el.style.left=
+                (
+                    playerX+
+                    bolt[1]
+                )+"px";
+
+
+            el.style.top=
+                (
+                    260+
+                    bolt[2]
+                )+"px";
+
+
+            container.appendChild(
+                el
+            );
+
+
+            setTimeout(
+                ()=>el.remove(),
+                750
+            );
+
+        }
+    );
+
+
+    setTimeout(
+        ()=>{
+
+            player.classList.remove(
+                "electrocuted"
+            );
+
+        },
+        750
+    );
+
+}
+
+
+/* =========================
+   ELIXIR EFFECT
+========================= */
+
+function createElixirEffect(){
+
+    const el=
+        document.createElement(
+            "div"
+        );
+
+
+    el.className=
+        "electric-bolt elixir-reward";
+
+
+    el.textContent=
+        "🧪";
+
+
+    el.style.left=
+        (playerX+35)+"px";
+
+
+    el.style.top=
+        "250px";
+
+
+    el.style.fontSize=
+        "55px";
+
+
+    container.appendChild(
+        el
+    );
+
+
+    setTimeout(
+        ()=>el.remove(),
+        850
+    );
+
+}
+
+
+/* =========================
+   BOSS
+========================= */
+
+function startBoss(){
+
+    bossActive=true;
+
+    bossHP=10;
+
+
+    boss.style.display=
+        "flex";
+
+
+    boss.style.top=
+        "-130px";
+
+
+    bossHealthBar.style.width=
+        "100%";
+
+
+    floating(
+        "👾 CAVITY BOSS!",
+        playerX,
+        220
+    );
+
+
+    clearInterval(
+        spawnInterval
+    );
+
+
+    clearInterval(
+        obstacleInterval
+    );
+
+
+    spawnInterval=null;
+
+    obstacleInterval=null;
+
+}
+
+
+function updateBoss(){
+
+    if(quizActive)
+        return;
+
+
+    let top=
+        parseFloat(
+            boss.style.top
+        )||-130;
+
+
+    if(top<120)
+        top+=1.2;
+
+
+    boss.style.top=
+        top+"px";
+
+
+    if(Math.random()<.012)
+        spawnBossAttack();
+
+}
+
+
+function spawnBossAttack(){
+
+    if(
+        !gameRunning ||
+        quizActive
+    )
+        return;
+
+
+    const el=
+        document.createElement(
+            "div"
+        );
+
+
+    el.className=
+        "cavity-monster";
+
+
+    el.textContent="🦠";
+
+
+    const x=
+        Math.random()*
+        (
+            container.clientWidth-50
+        );
+
+
+    el.style.left=
+        x+"px";
+
+
+    el.style.top=
+        "100px";
+
+
+    container.appendChild(
+        el
+    );
+
+
+    items.push({
+
+        el,
+
+        x,
+
+        y:100,
+
+        speed:5,
+
+        type:"bossAttack"
+
+    });
+
+}
+
+
+/* =========================
+   BOSS ATTACK COLLECTION
+========================= */
+
+const originalCollectItem=
+    collectItem;
+
+
+collectItem=function(item){
+
+    if(item.type==="bossAttack"){
+
+        item.el.remove();
+
+
+        const index=
+            items.indexOf(item);
+
+
+        if(index!==-1)
+            items.splice(index,1);
+
+
+        if(!shield){
+
+            lives--;
+
+
+            floating(
+                "👾 BOSS HIT! ❤️ -1",
+                item.x,
+                item.y
+            );
+
+
+            playSound("bad");
+
+
+            updateHUD();
+
+
+            checkGameEnd();
+
+        }
+
+
+        return;
+
+    }
+
+
+    originalCollectItem(item);
+
+};
+
+
+/* =========================
+   BOSS CLICK / SPACE
+========================= */
+
+container.addEventListener(
+    "click",
+    ()=>{
+
+        if(
+            bossActive &&
+            !quizActive
+        ){
+
+            bossHP--;
+
+
+            bossHealthBar.style.width=
+                (bossHP*10)+"%";
+
+
+            floating(
+                "💥 BOSS -1",
+                playerX,
+                170
+            );
+
+
+            playSound("gold");
+
+
+            if(bossHP<=0)
+                defeatBoss();
+
+        }
+
+    }
+);
+
+
+function defeatBoss(){
+
+    bossActive=false;
+
+    score=50;
+
+
+    playSound("win");
+
+
+    floating(
+        "👑 BOSS DEFEATED!",
+        playerX,
+        200
+    );
+
+
+    setTimeout(
+        ()=>endGame(true),
+        900
+    );
+
+}
+
+
+/* =========================
+   JAR
+========================= */
+
+function addToJar(){
+
+    const tooth=
+        document.createElement(
+            "div"
+        );
+
+
+    tooth.className=
+        "jar-tooth";
+
+
+    const positions=[
+
+        [12,31],
+        [24,34],
+        [34,30],
+        [17,40],
+        [29,42],
+        [8,37],
+        [37,39],
+        [21,28]
+
+    ];
+
+
+    const p=
+        positions[
+            Math.floor(
+                Math.random()*
+                positions.length
+            )
+        ];
+
+
+    tooth.style.left=
+        p[0]+"px";
+
+
+    tooth.style.top=
+        p[1]+"px";
+
+
+    tooth.style.transform=
+        `rotate(${
+            (Math.random()-.5)*60
+        }deg)`;
+
+
+    jarTeeth.appendChild(
+        tooth
+    );
+
+
+    while(
+        jarTeeth.children.length>12
+    )
+        jarTeeth.firstChild.remove();
+
+}
+
+
+/* =========================
+   HUD
+========================= */
+
+function updateHUD(){
+
+    scoreDisplay.textContent=
+        Math.min(score,50);
+
+
+    livesDisplay.textContent=
+        Math.max(lives,0);
+
+
+    levelDisplay.textContent=
+        level;
+
+
+    comboDisplay.textContent=
+        combo;
+
+
+    elixirsDisplay.textContent=
+        elixirs;
+
+}
+
+
+/* =========================
+   GAME END
+========================= */
+
+function checkGameEnd(){
+
+    if(lives<=0){
+
+        lives=0;
+
+        updateHUD();
+
+        endGame(false);
+
+        return;
+
+    }
+
+
+    if(
+        score>=50 &&
+        !bossActive
+    ){
+
+        score=50;
+
+        updateHUD();
+
+        endGame(true);
+
+    }
+
+}
+
+
+function endGame(won){
+
+    if(!gameRunning)
+        return;
+
+
+    gameRunning=false;
+
+
+    clearInterval(
+        spawnInterval
+    );
+
+
+    clearInterval(
+        obstacleInterval
+    );
+
+
+    cancelAnimationFrame(
+        animationFrame
+    );
+
+
+    moveLeft=false;
+
+    moveRight=false;
+
+
+    if(won){
+
+        gameResult.textContent=
+            "🎉 DENTAL CHAMPION! 🦷";
+
+
+        playSound("win");
+
+    }
+
+    else{
+
+        gameResult.textContent=
+            "⚡ ELECTROCUTED / GAME OVER";
+
+    }
+
+
+    finalScore.textContent=
+        Math.min(score,50);
+
+
+    finalLevel.textContent=
+        level;
+
+
+    finalElixirs.textContent=
+        elixirs;
+
+
+    gameOverScreen.style.display=
+        "flex";
+
+}
+
+
+/* =========================
+   FLOATING TEXT
+========================= */
+
+function floating(text,x,y){
+
+    const el=
+        document.createElement(
+            "div"
+        );
+
+
+    el.className=
+        "floating-text";
+
+
+    el.textContent=
+        text;
+
+
+    el.style.left=
+        x+"px";
+
+
+    el.style.top=
+        y+"px";
+
+
+    container.appendChild(
+        el
+    );
+
+
+    setTimeout(
+        ()=>el.remove(),
+        850
+    );
+
+}
+
+
+/* =========================
+   KEYBOARD
+========================= */
+
+document.addEventListener(
+    "keydown",
+    e=>{
+
+        initAudio();
+
+
+        if(
+            e.key==="ArrowLeft"||
+            e.key.toLowerCase()==="a"
+        )
+            moveLeft=true;
+
+
+        if(
+            e.key==="ArrowRight"||
+            e.key.toLowerCase()==="d"
+        )
+            moveRight=true;
+
+
+        if(
+            e.key===" " &&
+            bossActive &&
+            !quizActive
+        ){
+
+            e.preventDefault();
+
+
+            bossHP--;
+
+
+            bossHealthBar.style.width=
+                (bossHP*10)+"%";
+
+
+            playSound("gold");
+
+
+            if(bossHP<=0)
+                defeatBoss();
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    e=>{
+
+        if(
+            e.key==="ArrowLeft"||
+            e.key.toLowerCase()==="a"
+        )
+            moveLeft=false;
+
+
+        if(
+            e.key==="ArrowRight"||
+            e.key.toLowerCase()==="d"
+        )
+            moveRight=false;
+
+    }
+);
+
+
+/* =========================
+   WINDOW BLUR
+========================= */
+
+window.addEventListener(
+    "blur",
+    ()=>{
+
+        moveLeft=false;
+
+        moveRight=false;
+
+    }
+);
+
+
+/* =========================
+   TOUCH BUTTONS
+========================= */
+
+function setupTouchButton(
+    button,
+    direction
+){
+
+    function start(e){
+
+        initAudio();
+
+
+        if(e.cancelable)
+            e.preventDefault();
+
+
+        button.classList.add(
+            "active"
+        );
+
+
+        if(direction==="left")
+            moveLeft=true;
+
+        else
+            moveRight=true;
+
+    }
+
+
+    function stop(e){
+
+        if(e.cancelable)
+            e.preventDefault();
+
+
+        button.classList.remove(
+            "active"
+        );
+
+
+        if(direction==="left")
+            moveLeft=false;
+
+        else
+            moveRight=false;
+
+    }
+
+
+    button.addEventListener(
+        "touchstart",
+        start,
+        {passive:false}
+    );
+
+
+    button.addEventListener(
+        "touchend",
+        stop,
+        {passive:false}
+    );
+
+
+    button.addEventListener(
+        "touchcancel",
+        stop,
+        {passive:false}
+    );
+
+
+    button.addEventListener(
+        "mousedown",
+        start
+    );
+
+
+    button.addEventListener(
+        "mouseup",
+        stop
+    );
+
+
+    button.addEventListener(
+        "mouseleave",
+        stop
+    );
+
+}
+
+
+setupTouchButton(
+    document.getElementById(
+        "left-button"
+    ),
+    "left"
+);
+
+
+setupTouchButton(
+    document.getElementById(
+        "right-button"
+    ),
+    "right"
+);
+
+
+/* =========================
+   TOUCH PREVENT SCROLL
+========================= */
+
+document.addEventListener(
+    "touchmove",
+    e=>{
+
+        if(e.cancelable)
+            e.preventDefault();
+
+    },
+    {passive:false}
+);
+
+
+/* =========================
+   RESIZE
+========================= */
+
+window.addEventListener(
+    "resize",
+    ()=>{
+
+        if(!gameRunning){
+
+            playerX=
+                (
+                    container.clientWidth-
+                    105
+                )/2;
+
+
+            player.style.left=
+                playerX+"px";
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
